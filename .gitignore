@@ -1,0 +1,4 @@
+# For covid19 python project.
+env/
+**/*.gz
+**/*.zip
