@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-import boto3
-import logging
-import sys
-import re
-import json
 import csv
-from datetime import datetime
-from datetime import timezone
-from datetime import timedelta
+import logging
+import re
 from datetime import date
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
+
+import boto3
+
 """
 A simple class to capture County covid-19 cases by county from
 the Georgia Department of Healt's covid-19 status page.
@@ -21,7 +21,7 @@ def parsefile(datetime, fileName):
 	dynamodb = session.client('dynamodb')
 	s3_obj = client.get_object(Bucket='useast1-fetched-data', Key=fileName)
 	filedata = s3_obj['Body'].read().decode()
-	csvrdr = csv.reader(filedata.split('\n'),dialect='excel')
+	csvrdr = csv.reader(filedata.split('\n'), dialect='excel')
 	dbData = {}
 	for row in csvrdr:
 		rowlength = len(row)
@@ -33,7 +33,7 @@ def parsefile(datetime, fileName):
 			dbData['reported-datetime'] = { 'S':datetime }
 			dbData['numCasesReported'] = { 'N':cases }
 			dbData['numDeathsReported'] = { 'N':deaths }
-			dynamodb.put_item(TableName="covid-data-2", Item=dbData)
+			dynamodb.put_item(TableName="covid-data-3", Item=dbData)
 
 	s3_obj['Body'].close()
 
@@ -67,7 +67,7 @@ logger = logging.getLogger(name="__main__")
 if __name__ == '__main__':
 	session = boto3.Session()
 	s3 = session.client('s3')
-	resp = s3.list_objects(Bucket='useast1-fetched-data', Prefix='countycases-2022', MaxKeys=4096)
+	resp = s3.list_objects(Bucket='useast1-fetched-data', Prefix='countycases-2023', MaxKeys=4096)
 	csvfile = {}
 	for csvfile in resp['Contents']:
 		key = csvfile['Key']
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 		hour = key[21:23]
 		dayOfWeek = date(int(year),int(month),int(day)).weekday()
 		logger.info("dayOfWeek: {0}, hour: {1}".format(dayOfWeek, hour))
-		if ( dayOfWeek == 2 and hour == '19' and year == '2022' and month >= '10'):
+		if ( dayOfWeek == 2 and hour == '19' and year == '2023'):
 			# (year,month,day,hour) = (m.group(1),m.group(2),m.group(3),m.group(4))
 			reportdate = "{:s}-{:s}-{:s}T{:s}:00:00".format(year,month,day,hour)
 			logger.info("file: {0}, LastModified: {1}, reportDate: {2}".format(csvfile['Key'], csvfile['LastModified'], reportdate))
