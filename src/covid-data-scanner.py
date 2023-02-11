@@ -3,7 +3,7 @@ import boto3
 import logging
 import sys
 import json
-from datetime import datetime,timezone, timedelta
+from datetime import datetime,timezone, timedelta, time
 
 def getAllCountyData():
 	logger = logging.getLogger('getAllCountyData')
@@ -47,9 +47,10 @@ def getAllCountyData():
 
 def validUntil():
 	logger = logging.getLogger('validUntil')
-	utcnow = datetime.now()
-	logger.info("utcnow: {0}".format(utcnow))
-	vu = datetime.now() + timedelta(days=7)
+	offsets = [ 5,6,0,1,2,3,4]
+	day = datetime.combine(datetime.now(),time(hour=19))
+	vu = day - timedelta(days=offsets[day.weekday()]) + timedelta(days=7)
+	logger.info("Day is {2}, {3} Wednesday is: {0}, {1}".format(vu, vu.weekday(), day, day.weekday()))
 	logger.info("expires: {0}".format(vu.isoformat()))
 	return vu
 

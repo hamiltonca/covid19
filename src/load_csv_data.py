@@ -38,21 +38,14 @@ def parsefile(datetime, fileName):
 	s3_obj['Body'].close()
 
 def getdateandfile():
-	now = datetime.now(tz=timezone(timedelta(hours=-4)))
-	year = now.year
-	month = now.month
-	day = now.day
+	offsets = [ 5,6,0,1,2,3,4]
+	day = datetime.now()
+	wednesday = day - timedelta(days=offsets[day.weekday()])
+	logger.info("Day is {2}, {3} Wednesday is: {0}, {1}".format(wednesday, wednesday.weekday(), day, day.weekday()))
+	hour = 19
 
-	if (now.hour < 12):
-		hour = 19
-		day -= 1
-	elif (now.hour >= 12 and now.hour < 19):
-		hour= 12
-	else:
-		hour = 19
-
-	reportdate = "{:04d}-{:02d}-{:02d}T{:02}:00:00".format(year,month,day,hour)
-	file = "countycases-{:04d}{:02d}{:02d}-{:02d}00.csv".format(year,month,day,hour)
+	reportdate = "{:04d}-{:02d}-{:02d}T{:02}:00:00".format(wednesday.year,wednesday.month,wednesday.day,hour)
+	file = "countycases-{:04d}{:02d}{:02d}-{:02d}00.csv".format(wednesday.year,wednesday.month,wednesday.day,hour)
 
 	return (reportdate,file)
 
@@ -65,25 +58,30 @@ logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s %(message)s", d
 logger = logging.getLogger(name="__main__")
 
 if __name__ == '__main__':
-	session = boto3.Session()
-	s3 = session.client('s3')
-	resp = s3.list_objects(Bucket='useast1-fetched-data', Prefix='countycases-2023', MaxKeys=4096)
-	csvfile = {}
-	for csvfile in resp['Contents']:
-		key = csvfile['Key']
-		logger.info("key: {0}".format(key))
-		# countycases-20210320-1900.cs
-		year = key[12:16]
-		month = key[16:18]
-		day = key[18:20]
-		hour = key[21:23]
-		dayOfWeek = date(int(year),int(month),int(day)).weekday()
-		logger.info("dayOfWeek: {0}, hour: {1}".format(dayOfWeek, hour))
-		if ( dayOfWeek == 2 and hour == '19' and year == '2023'):
-			# (year,month,day,hour) = (m.group(1),m.group(2),m.group(3),m.group(4))
-			reportdate = "{:s}-{:s}-{:s}T{:s}:00:00".format(year,month,day,hour)
-			logger.info("file: {0}, LastModified: {1}, reportDate: {2}".format(csvfile['Key'], csvfile['LastModified'], reportdate))
-			parsefile(reportdate, key)
-		else:
-			logger.info("skipping file: {0}".format(key))
+	run_update = False
+	if (False == run_update):
+		event_handler(None, None)
+
+	if (True == run_update):
+		session = boto3.Session()
+		s3 = session.client('s3')
+		resp = s3.list_objects(Bucket='useast1-fetched-data', Prefix='countycases-2023', MaxKeys=4096)
+		csvfile = {}
+		for csvfile in resp['Contents']:
+			key = csvfile['Key']
+			logger.info("key: {0}".format(key))
+			# countycases-20210320-1900.cs
+			year = key[12:16]
+			month = key[16:18]
+			day = key[18:20]
+			hour = key[21:23]
+			dayOfWeek = date(int(year),int(month),int(day)).weekday()
+			logger.info("dayOfWeek: {0}, hour: {1}".format(dayOfWeek, hour))
+			if ( dayOfWeek == 2 and hour == '19' and year == '2023'):
+				# (year,month,day,hour) = (m.group(1),m.group(2),m.group(3),m.group(4))
+				reportdate = "{:s}-{:s}-{:s}T{:s}:00:00".format(year,month,day,hour)
+				logger.info("file: {0}, LastModified: {1}, reportDate: {2}".format(csvfile['Key'], csvfile['LastModified'], reportdate))
+				parsefile(reportdate, key)
+			else:
+				logger.info("skipping file: {0}".format(key))
 
