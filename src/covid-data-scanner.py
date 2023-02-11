@@ -4,6 +4,7 @@ import logging
 import sys
 import json
 from datetime import datetime,timezone, timedelta, time
+import dateutil
 
 def getAllCountyData():
 	logger = logging.getLogger('getAllCountyData')
@@ -48,7 +49,8 @@ def getAllCountyData():
 def validUntil():
 	logger = logging.getLogger('validUntil')
 	offsets = [ 5,6,0,1,2,3,4]
-	day = datetime.combine(datetime.now(),time(hour=19))
+	mytz = dateutil.tz.gettz('EST5EDT')
+	day = datetime.combine(datetime.now(),time(hour=19),tzinfo=mytz)
 	vu = day - timedelta(days=offsets[day.weekday()]) + timedelta(days=7)
 	logger.info("Day is {2}, {3} Wednesday is: {0}, {1}".format(vu, vu.weekday(), day, day.weekday()))
 	logger.info("expires: {0}".format(vu.isoformat()))
